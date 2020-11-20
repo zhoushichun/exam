@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.garm.modules.exam.dao.PaperTowardsDao">
+
+    <select id="queryList" resultType="com.garm.modules.exam.dto.PaperTowardsDTO">
+        SELECT * FROM exam_paper_towards
+        <where>
+            <if test="startTime != null and startTime !=''">
+                AND create_time >= cast(#{startTime} as date)
+            </if>
+            <if test="endTime != null and endTime !=''">
+                 AND create_time &lt;= cast(#{endTime} as date)
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+
+    <select id="queryTowardsData" resultType="com.garm.modules.exam.entity.PaperTowardsEntity">
+        SELECT
+        (SELECT COUNT(*) FROM exam_library WHERE TO_DAYS(create_time) = TO_DAYS(#{date})) questionsCount,
+        (SELECT COUNT(*) FROM exam_library WHERE TO_DAYS(create_time) = TO_DAYS(#{date}) AND range_type != 2) testQuestionsCount,
+        (SELECT COUNT(*) FROM exam_library WHERE TO_DAYS(create_time) = TO_DAYS(#{date}) AND range_type != 1) seltQuestionsCount,
+        (SELECT COUNT(*) FROM exam_paper WHERE TO_DAYS(create_time) = TO_DAYS(#{date})) paperCount,
+        (SELECT COUNT(*) FROM exam_official_test WHERE TO_DAYS(create_time) = TO_DAYS(#{date})) testCount
+    </select>
+
+</mapper>

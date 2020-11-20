@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.garm.modules.exam.dao.ServiceOrderDao">
+
+    <select id = "selectList" resultType="com.garm.modules.exam.dto.ServiceOrderDTO">
+        SELECT (select c.item_name from exam_dict_item  c where c.dict_item_id = a.service_type) service_type_name,b.user_id,a.service_type,
+        a.type,a.fee,a.pay_type,a.pay_time,b.username,b.nickname FROM exam_service_order a
+        LEFT JOIN tb_user b on a.user_id = b.user_id
+        WHERE a.status = 2
+        <if test="startTime!=null and startTime !=''">
+            AND DATE_FORMAT(a.pay_time,'%Y-%m-%d') >=DATE_FORMAT(#{startTime},'%Y-%m-%d')
+        </if>
+        <if test="endTime!=null and endTime !=''">
+            AND DATE_FORMAT(a.pay_time,'%Y-%m-%d') &lt;=DATE_FORMAT(#{endTime},'%Y-%m-%d')
+        </if>
+        ORDER BY a.pay_time DESC
+    </select>
+
+
+</mapper>

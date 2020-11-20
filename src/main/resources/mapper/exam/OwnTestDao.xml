@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.garm.modules.exam.dao.OwnTestDao">
+
+    <select id="queryOwnCount" resultType="java.lang.Integer">
+        select count(0)
+        from exam_own_test a
+        where a.user_id=#{userId}
+		and a.state_time > 0
+		and a.own_test_id is not null
+        and convert(a.create_time,date) >= convert(#{startTime},date)
+        and <![CDATA[convert(a.create_time,date) <= convert(#{endTime},date)]]>
+        and a.service_type = #{serviceType}
+    </select>
+
+
+    <select id="queryOwnPageList" resultType="com.garm.modules.web.dto.error.ErrorTestRespDTO">
+        SELECT Opojo.own_test_id testId,Opojo.own_test_name testName,(Opojo.total_num-Opojo.true_num) falseNum,Ipojo.item_name as service_type_name,Opojo.service_type,
+        Opojo.start_time,Opojo.end_time,Opojo.error_detail,Ipojo.value filePath
+        from exam_own_test Opojo
+        LEFT JOIN exam_dict_item Ipojo ON Opojo.service_type = Ipojo.dict_item_id
+        WHERE Opojo.end_time is not null and (Opojo.total_num-Opojo.true_num) != 0
+        <if test="dto.testName !=null and dto.testName !=''">AND Opojo.own_test_name LIKE CONCAT('%','${dto.testName}','%') </if>
+        <if test="dto.serviceType !=null and dto.serviceType !=''">AND Opojo.service_type=#{dto.serviceType} </if>
+        <if test="dto.startTime !=null and dto.startTime !=''">AND convert(Opojo.start_time,date) &lt;= convert(#{dto.startTime},date) </if>
+        <if test="dto.endTime !=null and dto.endTime !=''"><![CDATA[AND convert(Opojo.end_time,date) >= convert(#{dto.endTime},date)]]></if>
+        <if test="userId !=null and userId !=''">AND Opojo.user_id = #{userId}</if>
+        order by Opojo.start_time desc
+    </select>
+
+
+    <select id="queryOfficialPageList" resultType="com.garm.modules.web.dto.error.ErrorTestRespDTO">
+        SELECT Opojo.official_test_id testId,pojo.official_test_name testName,(Ppojo.total_num-Opojo.true_num) as falseNum,Ipojo.item_name as service_type_name,pojo.service_type,
+        Opojo.start_time,Opojo.end_time,Opojo.error_detail,Ipojo.value filePath
+        from  exam_official_test_user Opojo
+        LEFT JOIN exam_official_test pojo on Opojo.official_test_id = pojo.official_test_id
+        LEFT JOIN exam_dict_item Ipojo ON pojo.service_type = Ipojo.dict_item_id
+        LEFT JOIN exam_paper Ppojo on Opojo.paper_id = Ppojo.paper_id
+        WHERE Opojo.end_time is not null and (Ppojo.total_num-Opojo.true_num) != 0
+        <if test="dto.testName !=null and dto.testName !=''">AND pojo.official_test_name LIKE CONCAT('%','${dto.testName}','%')</if>
+        <if test="dto.serviceType !=null and dto.serviceType !=''">AND pojo.service_type=#{dto.serviceType}</if>
+        <if test="dto.startTime !=null and dto.startTime !=''"><![CDATA[AND convert(Opojo.start_time,date) >= convert(#{dto.startTime},date)]]></if>
+        <if test="dto.endTime !=null and dto.endTime !=''"><![CDATA[AND convert(Opojo.end_time,date) <= convert(#{dto.endTime},date)]]></if>
+        <if test="userId !=null and userId !=''">AND Opojo.user_id = #{userId}</if>
+        order by Opojo.start_time desc
+    </select>
+
+</mapper>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.garm.modules.exam.dao.OwnTestTypeDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.garm.modules.exam.entity.OwnTestTypeEntity" id="ownTestTypeMap">
+        <result property="id" column="id"/>
+        <result property="ownTestId" column="own_test_id"/>
+        <result property="ownTestName" column="own_test_name"/>
+        <result property="type" column="type"/>
+        <result property="difficultyType" column="difficulty_type"/>
+        <result property="ownNum" column="own_num"/>
+        <result property="eyeType" column="eye_type"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+
+</mapper>

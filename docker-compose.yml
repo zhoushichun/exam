@@ -1,0 +1,8 @@
+version: '2'
+#services:
+#  mb_exam:
+#    image: exam/mb
+#    ports:
+#      - "8080:8080"
+#    environment:
+#      - spring.profiles.active=dev

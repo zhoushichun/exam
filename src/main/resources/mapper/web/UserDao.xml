@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.garm.modules.web.dao.UserDao">
+
+    <select id="listByServiceByServiceType"
+            resultType="com.garm.modules.exam.dto.test.official.OfficialTestUserInfoDTO">
+        SELECT distinct
+        uPojo.user_id,uPojo.username,uPojo.nickname,
+        uPojo.user_type as userType,
+        ifnull((SELECT distinct GROUP_CONCAT(DISTINCT CONCAT(itemPojo.item_name,'(',IF(oPojo.type != 1,'S','M'),DATE_FORMAT(serPojo.expire_time,'%Y-%m-%d')),')' SEPARATOR '、')
+        FROM sys_user_service serPojo
+        LEFT JOIN exam_dict_item itemPojo on itemPojo.dict_item_id = serPojo.service_type
+        LEFT JOIN exam_service_order oPojo ON oPojo.order_id = serPojo.order_id
+        WHERE serPojo.user_id = uPojo.user_id AND serPojo.status = 2),'无') services
+        FROM  tb_user uPojo
+        LEFT JOIN sys_user_service tuPojo ON uPojo.user_id = tuPojo.user_id and tuPojo.status=2
+        where uPojo.is_del = 2
+        <if test="serviceType !=null and serviceType !=''">
+            and tuPojo.service_type = #{serviceType}
+        </if>
+        <if test="username !=null and username !=''">
+            AND uPojo.username LIKE CONCAT('%',#{username},'%')
+        </if>
+        <if test="userIds != null">
+            and uPojo.user_id not in
+            <foreach item="userId" collection="userIds" open="(" separator="," close=")">
+                #{userId}
+            </foreach>
+        </if>
+        <if test="nickname !=null and nickname !=''">
+            and uPojo.nickname LIKE CONCAT('%',#{nickname},'%')
+        </if>
+        <if test="userType !=null and userType !=''">
+            AND uPojo.user_type = #{userType}
+        </if>
+        <if test="userId !=null ">
+            and uPojo.user_id in
+            <foreach item="id" collection="userId" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+
+    </select>
+
+
+    <select id="queryServicePayingStrByUserId" resultType="java.util.Map">
+		SELECT GROUP_CONCAT(distinct CONCAT(item.item_name,'(',
+        IF(serPojo.type != 1,'S','M'),
+        DATE_FORMAT(serPojo.expire_time,'%Y-%m-%d')),')' SEPARATOR '、') as services,
+        group_concat(serPojo.service_id) as serviceIds,
+        group_concat(serPojo.service_type) as serviceTypes
+        FROM sys_user_service serPojo
+        LEFT JOIN exam_dict_item item on serPojo.service_type = item.dict_item_id
+        WHERE serPojo.user_id = #{userId} AND serPojo.status = 2
+        group by serPojo.user_id
+	</select>
+
+    <select id="queryServiceOverStrByUserId" resultType="java.util.Map">
+		SELECT distinct CONCAT(item.item_name,'(',
+        IF(serPojo.type != 1,'S','M'),
+        DATE_FORMAT(serPojo.expire_time,'%Y-%m-%d'),')') as services,
+        group_concat(serPojo.service_id) as serviceIds,
+        group_concat(serPojo.service_type) as serviceTypes
+        FROM sys_user_service serPojo
+        LEFT JOIN exam_dict_item item on serPojo.service_id = item.item_name
+        WHERE serPojo.user_id = #{userId} AND serPojo.status = 1 order by serPojo.expire_time desc limit 1
+	</select>
+
+
+    <select id="selcetTestTotal" resultType="com.garm.modules.web.dto.UserCountInfoDTO">
+		select
+		(select ifnull(count(mm.do_test!=1 or null),0) from exam_official_test_user mm where mm.user_id = a.user_id) joinNum,
+		(select count(b.is_pass =1 or null) from exam_official_test_user b where b.user_id = a.user_id) noPassNum ,
+		(select count(*) from exam_own_test mm where mm.user_id = a.user_id and mm.test_start_time is not null ) ownNum from tb_user a
+		WHERE a.user_id = #{userId}
+	</select>
+</mapper>

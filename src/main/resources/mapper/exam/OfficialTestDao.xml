@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.garm.modules.exam.dao.OfficialTestDao">
+
+    <!--查询前端用户考试列表-->
+    <select id="queryOfficialTestList" resultType="com.garm.modules.web.dto.test.OfficialTestPageListRespDTO">
+        SELECT
+        o.official_test_id officialTestId, o.official_test_name officialTestName,
+        o.service_type serviceType, item.item_name serviceTypeName,item.value filePath,
+        o.total_score totalScore, o.pass_score passScore, o.time stateTime,
+        o.test_start_time gmtTestStart, o.test_end_time gmtTestEnd
+        FROM exam_official_test o
+        LEFT JOIN exam_official_test_user u ON o.official_test_id = u.official_test_id
+        LEFT JOIN exam_dict_item item on o.service_type = item.dict_item_id
+        <where>
+            <if test="dto.userId != null">AND u.user_id = #{dto.userId}</if>
+            <if test="dto.isDel != null">AND o.is_del = #{dto.isDel}</if>
+        </where>
+        ORDER BY o.create_time DESC
+    </select>
+
+    <select id="selectOfficialTestToWebLimit"
+            resultType="com.garm.modules.web.dto.test.WOfficialTestResponseDTO">
+        SELECT
+        tPojo.official_test_id,tPojo.official_test_name,fPojo.item_name service_type_name,tPojo.total_score,tPojo.pass_score,
+        tPojo.test_start_time gmt_test_start,tPojo.test_end_time gmt_test_end
+        ,tPojo.time,uPojo.do_test,fPojo.value file_path,uPojo.state_time,uPojo.scores
+        FROM exam_official_test tPojo
+        LEFT JOIN exam_official_test_user uPojo ON tPojo.official_test_id = uPojo.official_test_id
+        LEFT JOIN exam_dict_item fPojo ON tPojo.service_type = fPojo.dict_item_id
+        <where>
+            uPojo.user_id = #{dto.userId}
+            <if test="dto.doTest != null and dto.doTest!=''">
+                <if test="dto.doTest ==1">
+                    AND uPojo.do_test = #{dto.doTest}
+                    AND convert(tPojo.test_end_time,datetime) >= convert(now(),datetime)
+                </if>
+                <if test="dto.doTest ==2">
+                    AND uPojo.do_test = #{dto.doTest}
+                    AND convert(tPojo.test_end_time,datetime) >= convert(now(),datetime)
+                </if>
+                <if test="dto.doTest ==3">
+                    AND convert(tPojo.test_end_time,datetime) &lt; convert(now(),datetime)
+                </if>
+
+                <!--AND uPojo.do_test = #{dto.doTest}-->
+            </if>
+            <if test="dto.officialTestName != null and dto.officialTestName != ''">
+                AND tPojo.official_test_name LIKE CONCAT('%',#{dto.officialTestName},'%')
+            </if>
+            <if test="dto.serviceId != null and dto.serviceId !=''">
+                AND tPojo.service_type = #{dto.serviceId}
+            </if>
+            <if test="dto.gmtTestStart != null and dto.gmtTestStart!='' ">
+                AND tPojo.test_start_time >= convert(#{dto.gmtTestStart},datetime)
+            </if>
+            <if test="dto.gmtTestEnd != null and dto.gmtTestEnd!=''">
+                <![CDATA[ AND tPojo.test_end_time <= convert(#{dto.gmtTestEnd},datetime) ]]>
+            </if>
+            AND tPojo.is_del = 2
+        </where>
+        ORDER BY tPojo.test_start_time DESC
+    </select>
+
+
+    <select id="selectOfficialTestById"
+            resultType="com.garm.modules.web.dto.test.WOfficialTestResponseDTO">
+        SELECT
+        tPojo.official_test_id,tPojo.official_test_name,fPojo.item_name service_type_name,tPojo.total_score,tPojo.pass_score,
+        tPojo.test_start_time gmt_test_start,tPojo.test_end_time gmt_test_end
+        ,tPojo.time,uPojo.do_test,fPojo.value file_path
+        FROM exam_official_test tPojo
+        LEFT JOIN exam_official_test_user uPojo ON tPojo.official_test_id = uPojo.official_test_id
+        LEFT JOIN exam_dict_item fPojo ON tPojo.service_type = fPojo.dict_item_id
+        <where>
+            <if test="userId != null and userId!=''">
+                AND uPojo.user_id = #{userId}
+            </if>
+            <if test=" officialTestId!= null and officialTestId!=''">
+                AND uPojo.official_test_id = #{officialTestId}
+            </if>
+        </where>
+    </select>
+
+
+    <!--考试状态统计-->
+    <select id="selectOfficialTestCount" resultType="java.lang.Integer" >
+        SELECT
+        COUNT(*)
+        FROM exam_official_test tPojo
+        LEFT JOIN exam_official_test_user uPojo ON tPojo.official_test_id = uPojo.official_test_id
+        <where>
+            uPojo.user_id = #{dto.userId}
+            <if test="dto.doTest != null and dto.doTest!=''">
+                AND uPojo.do_test = #{dto.doTest}
+            </if>
+            <if test="dto.officialTestName != null and dto.officialTestName != ''">
+                AND tPojo.official_test_name LIKE CONCAT('%',#{dto.officialTestName},'%')
+            </if>
+            <if test="dto.serviceId != null and dto.serviceId!=''">
+                AND tPojo.service_type = #{dto.serviceId}
+            </if>
+            <if test="dto.gmtTestStart != null and dto.gmtTestStart != ''">
+                AND tPojo.test_start_time >= convert(#{dto.gmtTestStart} datetime)
+            </if>
+            <if test="dto.gmtTestEnd != null and dto.gmtTestEnd != '' ">
+                <![CDATA[ AND tPojo.test_end_time <= convert( #{dto.gmtTestEnd} )]]>
+            </if>
+            AND tPojo.is_del = 2
+        </where>
+    </select>
+
+
+    <select id="selectExpireTest" resultType="com.garm.modules.exam.entity.OfficialTestEntity">
+        SELECT * FROM exam_official_test tPojo
+        WHERE <![CDATA[ test_end_time <= NOW() ]]>
+        AND (SELECT COUNT(*) FROM exam_official_test_user WHERE official_test_id = tPojo.official_test_id AND do_test != 3) > 0
+    </select>
+
+</mapper>

@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.garm.modules.exam.dao.OfficialTestUserDao">
+
+    <!--活跃排行榜-->
+    <select id="findTanking"
+            resultType="com.garm.modules.exam.dto.ranke.RankingDTO">
+        SELECT * FROM (
+        SELECT COUNT(*) testCount,IFNULL(SUM(aPojo.scores),0) score,uPojo.nickname,uPojo.username
+        FROM exam_official_test_user aPojo
+        LEFT JOIN tb_user uPojo ON aPojo.user_id = uPojo.user_id
+        <where>
+            <if test="date != null and date != ''">
+               and DATE_FORMAT(aPojo.create_time,'%Y-%m') = #{date}
+            </if>
+        </where>
+        GROUP BY aPojo.user_id
+        LIMIT 30 ) as viewPojo
+        ORDER BY viewPojo.testCount DESC
+    </select>
+
+
+    <!--考生成绩统计列表-->
+    <select id="queryOfficialTestStudentList"
+            resultType="com.garm.modules.exam.dto.usertestcount.OfficialTestStudentListDTO">
+        select uPojo.user_id,uPojo.nickname,uPojo.username,
+        count(pojo.user_id) total_num,
+        CONVERT ((sum(IFNULL(pojo.state_time, 0)) / 60),DECIMAL (10, 0)) avg_time
+        from exam_official_test_user pojo
+        LEFT JOIN tb_user uPojo on uPojo.user_id = pojo.user_id
+        WHERE pojo.do_test = 3
+        <if test="nickname != null and nickname != ''">
+            AND uPojo.nickname LIKE CONCAT('%', #{nickname}, '%')
+        </if>
+        <if test="username != null and username != '' ">
+            AND uPojo.username = #{username}
+        </if>
+        group by uPojo.user_id
+        ORDER BY pojo.create_time DESC
+    </select>
+
+
+    <!--考生成绩统计列表-基本信息-->
+    <select id="queryOfficialTestStudentInfo"
+            resultType="com.garm.modules.exam.dto.usertestcount.OfficialTestUserInfoDTO">
+        select uPojo.user_id,uPojo.nickname,uPojo.username,tPojo.update_time as time,
+        count(pojo.user_id) total_num,
+        (select count(*) from exam_official_test_user a where a.user_id = uPojo.user_id and is_pass=2) total_pass_num,
+        CONVERT(((select count(*) from exam_official_test_user a where a.user_id = uPojo.user_id and is_pass=2)/count(pojo.user_id)), decimal(10,2)) passRate
+        from  tb_user uPojo
+        LEFT JOIN exam_official_test_user pojo on uPojo.user_id = pojo.user_id
+        LEFT JOIN tb_user_token tPojo on pojo.user_id = tPojo.user_id
+        WHERE pojo.do_test = 3
+        <if test = "userId !=null and userId !=''">
+            and pojo.user_id = #{userId}
+        </if>
+        ORDER BY pojo.create_time DESC
+    </select>
+
+
+    <!--考生成绩统计-考试记录列表-->
+    <select id="queryOfficialTestUserHisInfo"
+            resultType="com.garm.modules.exam.dto.usertestcount.OfficialTestUserHisInfoDTO">
+        SELECT
+        a.id,
+        a.user_id,
+        b.official_test_id,
+        b.official_test_name,
+        b.service_type,
+        c.item_name AS service_type_name,
+        b.total_score,
+        a.scores,
+        a.is_pass,
+        b.test_start_time as testStartTime,
+        b.test_end_time as testEndTime
+        FROM
+        exam_official_test b
+        LEFT JOIN exam_official_test_user a on a.official_test_id = b.official_test_id and a.do_test=3
+        LEFT JOIN exam_dict_item c ON b.service_type = c.dict_item_id
+        where 1=1
+            <if test="userId != null and userId!=''">
+                AND a.user_id = #{userId}
+            </if>
+            <if test="testName != null and testName != '' ">
+                AND b.official_test_name LIKE CONCAT('%', #{testName}, '%')
+            </if>
+            <if test="serviceType != null and serviceType != '' ">
+                AND b.service_type = #{serviceType}
+            </if>
+            <if test="startTime != null and startTime != '' ">
+                <![CDATA[ AND cast(b.test_start_time as date) >= cast(#{startTime} as date) ]]>
+            </if>
+            <if test="endTime != null and endTime != '' ">
+                <![CDATA[ AND cast(b.test_end_time as date) <= cast(#{endTime} as date) ]]>
+            </if>
+
+        ORDER BY a.scores DESC
+    </select>
+
+    <!--考生成绩统计-成绩分析-->
+    <select id="queryScoreAnalysis" resultType="com.garm.modules.exam.dto.usertestcount.OfficialTestAnalysisInfoDTO">
+        SELECT b.item_name as eyeTypeName,
+        a.eye_type as eyeType,
+        a.total_num,a.true_num,
+        a.false_num,a.unanswered_num,a.error_percentage,(1-a.error_percentage) true_percentage FROM exam_official_test_user uPojo
+        left join sys_user_error_eye_type a on uPojo.official_test_id = a.test_id and uPojo.user_id = a.user_id
+        LEFT JOIN exam_dict_item b on a.eye_type = b.dict_item_id
+        WHERE uPojo.id = #{id}
+        ORDER BY a.error_percentage
+        LIMIT 0,10
+    </select>
+
+
+    <!--考试成绩统计列表-->
+    <select id="queryOfficialTestScoreList"
+            resultType="com.garm.modules.exam.dto.testcount.OfficialTestScoreListDTO">
+        SELECT o.official_test_id officialTestId,o.service_type,
+        c.item_name serviceTypeName,
+        o.official_test_name officialTestName,
+        IFNULL(b.totalNum,0) totalNum, IFNULL(b.avgScore,0) avgScore,
+        IFNULL(b.avgMin,0) avgMin, IFNULL(b.notPassNum,0) notPassNum
+        FROM exam_official_test o
+        LEFT JOIN(
+        SELECT official_test_id as test_id, COUNT(*) totalNum, CONVERT(IFNULL(AVG(scores),0), decimal(10,2)) avgScore,
+        CONVERT(IFNULL(AVG(state_time),0)/60, decimal(10,0)) avgMin,
+        SUM(IF(is_pass = 1,1,0)) notPassNum
+        FROM exam_official_test_user where end_time IS NOT NULL GROUP BY test_id
+        ) b ON o.official_test_id = b.test_id
+        LEFT JOIN exam_dict_item c on o.service_type = c.dict_item_id
+        WHERE
+        o.is_del = 2
+        <if test="serviceType != null and serviceType!=''">
+            AND o.service_type = #{serviceType}
+        </if>
+        <if test="officialTestName != null and officialTestName != '' ">
+            AND o.official_test_name LIKE CONCAT('%', #{officialTestName}, '%')
+        </if>
+        ORDER BY o.test_end_time DESC
+    </select>
+
+
+    <!--考试成绩统计-参考人员信息列表-->
+    <select id="queryOfficialTestScoreUserList"
+            resultType="com.garm.modules.exam.dto.testcount.OfficialTestScoreUserListDTO">
+        SELECT
+        o.id,u.user_id userId, u.username,
+        u.nickname,m.paper_name,
+        o.scores,o.is_pass isPass , CONVERT(IFNULL(o.state_time, 0) / 60, decimal(10,0)) testMin
+        FROM exam_official_test_user o
+        LEFT JOIN tb_user u  ON u.user_id = o.user_id
+        LEFT JOIN exam_paper m on m.paper_id = o.paper_id
+        <where>
+            <if test="officialTestId != null and officialTestId!=''">
+                AND o.official_test_id = #{officialTestId}
+            </if>
+            <if test="nickname != null and nickname != '' ">
+                AND u.nickname LIKE CONCAT('%', #{nickname}, '%')
+            </if>
+            <if test="isPass != null and isPass !=''">
+                AND o.is_pass = #{isPass}
+            </if>
+            <if test="username != null and username != '' ">
+                AND u.username = #{userName}
+            </if>
+        </where>
+        ORDER BY o.scores DESC, o.user_id DESC
+    </select>
+
+
+    <select id="queryOfficeCount" resultType="java.lang.Integer">
+        select count(0)
+        from exam_official_test_user a
+        left join exam_official_test t on a.official_test_id = t.official_test_id
+        where
+		a.user_id=#{userId}
+		and a.state_time > 0
+        and convert(a.create_time,date) >= convert(#{startTime},date)
+        and <![CDATA[convert(a.create_time,date) <= convert(#{endTime},date)]]>
+        and t.service_type = #{serviceType}
+    </select>
+
+
+    <select id="queryUserAllScoreDiagramList"
+            resultType="com.garm.modules.web.dto.test.ScoreDiagramListRespDTO">
+        select a.official_test_id,b.official_test_name,a.scores,a.start_time gmtStartTime,
+        a.end_time gmtEntTime,c.item_name serviceTypeName,b.time,b.total_score totalScores,b.pass_score passScores from exam_official_test_user a
+        LEFT JOIN exam_official_test b on a.official_test_id = b.official_test_id
+        LEFT JOIN exam_dict_item c on b.service_type = c.dict_item_id
+        where 1=1 AND a.user_id = #{dto.userId}
+        <if test="dto.officialTestName != null and dto.officialTestName != ''">
+            AND b.official_test_name LIKE CONCAT('%',#{dto.officialTestName},'%')
+        </if>
+        <if test="dto.gmtTestStart != null and dto.gmtTestStart!='' ">
+            AND a.start_time >= convert(#{dto.gmtTestStart},datetime)
+        </if>
+        <if test="dto.gmtTestEnd != null and dto.gmtTestEnd !='' ">
+            <![CDATA[ AND a.end_time <= convert(#{dto.gmtTestEnd},datetime)  ]]>
+        </if>
+        <if test="dto.serviceId != null and dto.serviceId!=''">
+            AND b.service_type = #{dto.serviceId}
+        </if>
+        <if test="dto.isAll == 2">
+            AND a.do_test = 3
+            ORDER BY a.start_time DESC
+        </if>
+
+        <if test="dto.isAll == 1">
+            and a.do_test = 3
+            ORDER BY b.official_test_name
+        </if>
+
+        <if test="dto.isAll == null || dto.isAll == ''">
+            and a.do_test = 3
+            ORDER BY a.start_time
+        </if>
+
+    </select>
+
+
+    <!--前端-首页成绩曲线图-->
+    <select id="queryScoreDiagramList" resultType="com.garm.modules.web.dto.test.ScoreDiagramListRespDTO">
+        SELECT
+        u.official_test_id , t.official_test_name officialTestName,
+        item.item_name serviceTypeName, u.scores scores,u.start_time gmtStartTime,u.end_time gmtEntTime,t.time,t.total_score totalScores,t.pass_score passScores
+        from exam_official_test_user u
+        LEFT JOIN exam_official_test t ON t.official_test_id = u.official_test_id
+        LEFT JOIN exam_dict_item item on item.dict_item_id = t.service_type
+        <where>
+            <if test="dto.userId != null">AND u.user_id = #{dto.userId}</if>
+            <if test="dto.serviceType != null">AND t.service_type = #{dto.serviceType}</if>
+            <if test="dto.doTest != null">AND u.do_test = #{dto.doTest}</if>
+        </where>
+        ORDER BY t.test_start_time DESC
+    </select>
+
+</mapper>

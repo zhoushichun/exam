@@ -1,0 +1,136 @@
+# Tomcat
+server:
+  tomcat:
+    uri-encoding: UTF-8
+    max-threads: 1000
+    min-spare-threads: 30
+
+
+  port: 5500
+  servlet:
+    session:
+      timeout: 5000ms
+#  servlet:
+#    context-path: /
+
+spring:
+  # 环境 dev|test|prod
+  profiles:
+    active: test
+  # jackson时间格式化
+  jackson:
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd HH:mm:ss
+  servlet:
+    multipart:
+      max-file-size: 30MB
+      max-request-size: 30MB
+      enabled: true
+  main:
+    allow-bean-definition-overriding: true #当遇到同样名字的时候，是否允许覆盖注册
+  mvc:
+    throw-exception-if-no-handler-found: true
+    static-path-pattern: /**
+  resources:
+    static-locations: file:./uploadFiles/mb_exam/upload/
+#  resources:
+#    add-mappings: false
+
+
+#mybatis
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  #实体扫描，多个package用逗号或者分号分隔
+  typeAliasesPackage: com.garm.modules.*.entity
+  global-config:
+    #数据库相关配置
+    db-config:
+      #主键类型  AUTO:"数据库ID自增", INPUT:"用户输入ID", ID_WORKER:"全局唯一ID (数字类型唯一ID)", UUID:"全局唯一ID UUID";
+      id-type: AUTO
+      logic-delete-value: -1
+      logic-not-delete-value: 0
+    banner: false
+  #原生配置
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    call-setters-on-nulls: true
+    jdbc-type-for-null: 'null'
+
+
+garm:
+  redis:
+    open: true
+  shiro:
+    redis: false
+  # 前台模块，是通过jwt认证的，如果要使用前台模块，则需要修改【加密秘钥】
+  jwt:
+    # 加密秘钥
+    secret: f4e2e52034348f86b67cde581c0f9eb5[www.garm.com]
+    # token有效时长，7天，单位秒
+    expire: 604800
+    header: token
+  #雪花算法 规则
+  boot:
+    snowflake:
+      snowflake-workerid: 1
+      snowflake-datacenterid: 1
+    aes:
+      aes-iv: 4377842562050954
+      aes-key: qlWnC5FBVxsd4x4Q
+      aes-mode: CBC
+      aes-padding: PKCS5Padding
+    message:
+      provider: lk
+      id: JMKJ005781
+      pwd: jmkj2019%%%
+      is-send: true
+file:
+  uploadFolder: ./uploadFiles/mb_exam/
+  modelFolder: /modelFolder/
+wechat:
+  #公众号appleId
+  APPID: wxbcf505e48cca9d24
+  #商户号
+  MCH_ID: 1552913291
+  #商户密钥
+  KEY: 224264f3d493fc0aa4b022852322b089
+  #APP和网页支付提交用户端ip, Native支付填调用微信支付API的机器IP, 即：服务器ip地址
+  SPBILL_CREATE_IP: 127.0.0.1
+  #接收微信支付异步通知回调地址，通知url必须为直接可访问的url，不能携带参数。（需要配置）
+#  NOTIFY_URL: http://imgtest.jimengtech.com:5256/api/web/pay/wechat/notify
+  NOTIFY_URL: http://imgtest.jimengtech.com:5500/api/web/pay/wechat/notify
+  #支付方式，取值如下：JSAPI，NATIVE，APP,MWEB
+  TRADE_TYPE: JSAPI
+  # 微信支付 - 统一下单地址
+  PLACEANORDER_URL: https://api.mch.weixin.qq.com/pay/unifiedorder
+alipay:
+  # 支付宝appid,收款账号既是您的APPID对应支付宝账号
+  APPID: 2021001159656421
+#  APPID: 2021000116686317
+  # 商户私钥，PKCS8格式RSA2私钥
+  MERCHANTPRIVATEKEY: MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCsFoVaz/VY5BOUSRHJpvDao6b1xL8po0i7Rjl/DJAUzSiJTEtZix/Oi14TeM96X+fT7eOVNGTOwzVjng1AeH/Ogqc9FFZF05LXXnEJHnSTOfdpm8nU8jlP03t9WrWmASA6Q8jkj2tXXmBYJTQ77JvLx7sgc/EpdQDZimAOHq4wFxhwKYek1TkJaZENrugdhTDXDB/KibidcgyqbYCv3ue66B//5G9TtvcN4v6/kdhgDOoIk06kCkTvO65AsXw3uHRis4lt23XUXdiEqKQIcF5DbxIyLJ28xMWkaHWWASTgBlmd0pLsMI8E36pMO+YfsZaC4lCIaZg1Eu8QmghCfyFXAgMBAAECggEBAIgDuN1BFwNuKYd/hV6j4yR8St9f5VPsqfTTGWiwrkSyrwJt2fRpQPeIMhAj4aEwolRgZwusAK1nnxAggQre8u1vWO2u4E2KXzp4e9EgUDV5kHLZXlpAJUpRtf4rLv2JUEadAvCb5tSEVJP2u+VNKwqSz/Vjjk4dG1HVy/v9BeIdYTVQ7ww1Dw9RDR8q+NTbvL3hE3/cAv91JjvUMM610KBd/RGIWB8hxXIL3KrSpyxKFJNS95II2CxbXB45SCo8r4Am7OIg8AAirEOltOAFwd1RrWaEzjT5gqceKCLkEXDGI9c1HCSzcGwo3qi6tgStcx5GKYM3SGZumt6IVTmEwuECgYEA6le/ieKjuno/OEqz3T2D6y7ZNJy2axas9tatFzPZP4oLs2IY96CplMqn7ItrJ8hz54LzrOdpuZgFPlQ/unwbXCzS7RBJG8SbsM0IYQzMWBxDyOjVfcymYjcpLpvFaqTljBa07bBzFqr33wvU4xkzYpES2md7yBAR0jQZ158xNocCgYEAu/3nSd4RE8lZYlz7w5hEM3oFIytWQu2XWM8CjNOUYrAmFxvxIPJtJ86ykw7L6rPe41RyOTq+nIsc37fA+Ro8xJCalHZzlgoccmHVuTxhUeqPeb0YVfE3nrwYfWF5dWbpuWG6e9p5ohW/E4NfPnQCZv0gaRRT0Q4pXEEGEKIRorECgYAUFbs75SnlRK8Acx6hWrFgyd4h7UCRQxtF+LZTI8V99aX1FPZQ2vtN3mSwGG7xtPOCJy4dZqQgHRBt/CiOIi7yIoFdgiTR9XLmn1wVfVRSRPHmWVZa9txX1KR58y3jawiljhipupLSoYqnGkt/v1wxGYAFKhNo3T+5xW9llKZSJwKBgE5KHjFQDvKbjuL88EhzuCtr7InJ+YGj6ryscVZuosQ6sZI8K75Z14WVeh7uMZQL1o371BnrUghlkt/EadQTzizaP9YGQnrAuToVbmlXMPxpX9kGHAVmkJBFqzlEB84RztJKVdxQjwkmX03kDx02OO3lCsNYGNPePvFRjxIMPKXxAoGBAJKo0QCJC8hr2AHd71UWFG/1FyGhIjRDelUdd/v7ZXQSMg2v5Gx/+OeXmgPgLqbijmFAm9TB0kE2m6keb4P8mgZZxBKnCPn+2DLK8eHdUFefFrZqsUpYKW0Gx2/MANP1jOYfNIB8gGJy3wvCU5ne+2M8Pc/xLWaAKkHjKsug9z0a
+#  MERCHANTPRIVATEKEY: MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCOzvUz0VDwztL72BqgwZn1+UguleN986DOYLqVqNtxkFIvlUDZRtNM62NGE1K5SGUvk2uQJVfRXbFRHnDOCHWj5W2MjkAgfHbzzPjuIagtXVO0G9OB+DRZc8SOp0dKFtn0pGcmP1+tAcd1HQdIL+khkptAQuIqPZyYXi4nthD2Y1XNLU7mpfnGoOFZH3WJ7Jk4er0H3YlhwWQie31SOKlPOqpaJkrO+03VXapLivftNHLhPbtxbs1ntqo0IR9pqsC23T+jiAZRg14AwBqYa3YO2ARzrc7yn6WRpk6wu+DOwAW8jJAQjmX5nRFqIiPCtzLvj5/yOgs4a6Cif8Q3n5ElAgMBAAECggEAFPpLxKfbxvPqxDnzd2fZEOvkcYttFoRiO86zueZLDfyQRhMbqo8f3O268IFIJpV+36U9KLiDlOq5cFwTYACYH1JFbF89BkiiRJ/4dSqWhMtvz0ZDJJVsQzOhTP8/lp+StsArss+eY1CelxKDjlQTX+4kRiVNCb1xMmSrTQQOq9KlhpzxZsAovZ7mmKE29nJSySzWEL67uj9Nd3mLMhVU4rl+jH0u9kRq8M8G13MfmSLHn/vgUoAF6wQ9wsgENw9VVMQH1HeoqW6mxCoc5mEZ9j2pPDFrlKwkbQ/pdbmaXPz7PEIkr6nsYnNVMd3WeNKzz4c8Lo163yD4yHY/yJ9qwQKBgQDEq81hwl4EzLxNoYSYXgS8+q7mk5tf5VhisPe2QTOLRwRnwsZkzY2aEhuzmk3b5PfHIHb4EQ/rMOh9SBATbF1lSzGc90EXx5tGpPL0/A165gWvbfxZ2DVuREIAyvcayCurP8KnpscM5mYMkoJGlc6j+Z6jJQmejesXmalcIAQ1FQKBgQC544k/7i2k/l6uX+/BjTKhaCrKeOrZLdSTz5+FjdQHj3mHwdlU4biNhIBv8En6i821mSr0B5I4sJeI+4yKI6jgPo+eTHQbotdpsSNNiemNgxWfncgDa6JE4qSdvGqmvOks9K5wnzZQh3SdeW9nkY3WMbf7c3NYTprPdwG+rcQP0QKBgQCOR4wJ0UebSVJhBxyZ7kqXPPQTM24QbicHHufWHk1f0TzKpApLGrn6YGdSA6uYDYmDsWTgCdfuWi+Xku6uXpMimMeHuwiIX4tiDCsIOOC3rHkodPU/Oj9NSmxFjpA9+9o7xaDZELqoBnaFWeiNkAsybX/qnvzai+kr5aq0TyU8EQKBgDFFYUzDue+AyOHZZfhcj63+qVDvifg00KK5JqREuo2idukH9a4tAjjohQ6ml0VEpyraRWtXUmeaTyAs5Mx8tTdy/ahMxX3JxOUr4Zqc0n4C38lmDezyK5mspUt19KLrcbbLyCzr1n6z2LIgzOmbyAedOBH7QPiIJTqWZaz/6/bxAoGBAIWo4O2mU+DNfMrd3RnQzC3SFFBpsp/WwiNcRUwg/9ZECQDSq1VccpRiCIEnj36MQvi43UKOyxCpCXBS6ODRMXcU6D3JwEMpogdwFN1zETwxsw6o5Hy3pS9e2e73/DGMvuQHfKpqv7f1s93MaGnLE5ZS3HPpzL03EWKEr1PEGr+m
+  # 应用公钥,查看地址：https://openhome.com/platform/keyManage.htm 对应APPID下的应用公钥。
+  ALIPAYPUBLICKEY: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnUm6USd+ukC6wHm+TTQotsHBI+ThKwXcTrTKf89iI0cSueVTqr+BDVWOzBH/JB3TamPAbC4FR+BN6CS+j1ARdY0rDRB9/prNZ9s/cEKnAu7Zb1ZP3mhsXBgeCiNLeGnrA/KK48w6/6XeSXcnyfzz4iU84bmP6Mt7VxjStqiipv6NhaU/tsn2zBbKH8SdanvpEIcWn64Ht0EqfvN4TNL9vzrJ863cMfxSLz4/je7vD5alHm3CT0DOAzMEPl6Ubd5Z+3QkS1VpuZy2XmAlB9aowRwMrIQ5kzE9OSsLedCthItvHEHaGJFdXuR/7pmK0p4F7gpXAInZxZn5Il20RXhgAQIDAQAB
+#  ALIPAYPUBLICKEY: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkxmqCsTVyVxGX4NDMWVdegGDRllVY+xEXI5lQwHWH7JbyxJmJ/TpiAG+QRTUEn6dhOPoZFUNu3JIF6P+m4dsb/iJbc0J/EcSUgc7x7xVF+Nzc1hsW/8+U4LuCA7sihEkmqAXHoXOGhA+wbu4LeFr2MtBRPbtHf+nadgURc58xMWOeBn/WDqdV2V6bS8/j5Xxm9nDV+he1zYoYJeJH0sO69kwXVczh5+d1of+j1nzAXSvskSlZF7s+xGlUGDp59NPKnf0jk4rVsSt21vtsTROc0yZM34soAi6GjqU/TpjYpxcX/jok+C5UGYMYlaLPPIWXm+hc8ZA9dtU+7OYe4j5TQIDAQAB
+  # 服务器异步通知页面路径
+#  NOTIFYURL: http://imgtest.jimengtech.com:5500/api/web/pay/alipay/notifyNotice
+  NOTIFYURL: http://127.0.0.1:5500/api/web/pay/alipay/notifyNotice
+  # 页面跳转同步通知页面路径
+#  RETURNURL: http://imgtest.jimengtech.com:5500/api/web/pay/alipay/returnNotice
+  RETURNURL: http://127.0.0.1:5500/api/web/pay/alipay/returnNotice
+  # 签名方式
+  SIGNTYPE: RSA2
+  # 字符编码格式
+  CHARSET: utf-8
+  # 统一下单路径，支付宝网关
+  GATEWAYURL: https://openapi.alipay.com/gateway.do
+#  GATEWAYURL: https://openapi.alipaydev.com/gateway.do
+
+
+exam:
+  config:
+    default_password: '000000'
+
+

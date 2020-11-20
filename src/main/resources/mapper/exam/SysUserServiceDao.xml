@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.garm.modules.exam.dao.SysUserServiceDao">
+
+    <select id="queryServiceByTime" resultType="com.garm.modules.exam.entity.SysUserServiceEntity">
+        select service_id as serviceId,user_id as userId from sys_user_service where status = 2
+        and convert(now(),date) > convert(expire_time,date)
+    </select>
+
+    <update id="updateServiceTypeById">
+        update sys_user_service set status = 1,update_time=now() where service_id = #{serviceId}
+    </update>
+
+    <select id="queryListByConditions" resultType="com.garm.modules.web.dto.shop.WUserServiceDTO">
+        SELECT item.item_name AS serviceName,eso.`type` AS typeName,eso.fee AS fee,sus.`status`,
+        sus.expire_time AS maturityTime,sus.create_time buyTime,sus.user_id as userId,sus.service_type as serviceType
+        FROM sys_user_service sus
+        left join exam_service_order eso on sus.order_id=eso.order_id
+        LEFT JOIN exam_dict_item item on item.dict_item_id = sus.service_type
+        <where>
+            <if test="dto.userId != null and dto.userId!=''"> and sus.user_id=#{dto.userId}</if>
+            <if test="dto.serviceId != null and dto.serviceId!=''"> and sus.service_type=#{dto.serviceId}</if>
+            <if test="dto.status != null  and dto.status !='' "> and sus.status=#{dto.status}</if>
+            <if test="dto.startTime != null and dto.startTime !=''"> and convert(sus.create_time,date) >= #{dto.startTime}</if>
+            <if test="dto.endTime != null and dto.endTime !=''"> <![CDATA[ and convert(sus.create_time,date) <= #{dto.endTime}]]></if>
+        </where>
+        order by sus.create_time desc,sus.service_id desc
+    </select>
+
+</mapper>

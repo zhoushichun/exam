@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.garm.modules.exam.dao.SysUserErrorEyeTypeDao">
+
+    <select id="queryAnalyzeInfo"
+            resultType="com.garm.modules.exam.dto.analyze.TestAnalyzeDTO$EyeAnalyze">
+        SELECT
+        SUM(a.total_num) total_num, b.item_name as eyeTypeName
+        FROM sys_user_error_eye_type a
+        left join exam_dict_item b on a.eye_type = b.dict_item_id
+        WHERE a.type = #{type}
+        GROUP BY a.eye_type
+        LIMIT 10
+    </select>
+
+    <!--考试错题集统计-错题集统计列表-->
+    <select id ="queryOfficialTestErrorStatistics" resultType="com.garm.modules.exam.dto.errortest.OfficialTestErrorStatisticsDTO">
+        select a.eye_type,item.item_name eyeTypeName,sum(a.total_num) totalEyesNum,CONVERT(IFNULL((sum(a.total_num)-sum(a.true_num))/sum(a.total_num),0),DECIMAL(10,2)) errorPercentage
+        from sys_user_error_eye_type a
+        LEFT JOIN exam_dict_item item on a.eye_type = item.dict_item_id
+        <where>
+            <if test="type !=null and type != ''">
+                and a.type = #{type}
+            </if>
+            <if test="testId !=null and testId != ''">
+                and a.test_id = #{testId}
+            </if>
+            <if test="eyeType !=null and eyeType != ''">
+                and a.eye_type = #{eyeType}
+            </if>
+        </where>
+        group by eye_type
+    </select>
+
+
+
+    <!--自测错题集统计-前端自测用户列表-->
+    <select id="querySelfTestUserList"
+            resultType="com.garm.modules.exam.dto.errorowntest.SelfTestUserListDTO">
+        select a.user_id,a.username,a.nickname,count(*) testNum,CONVERT(IFNULL(SUM(b.state_time)/60,0),DECIMAL(10,2)) testMin from tb_user a
+        LEFT JOIN exam_own_test b on a.user_id = b.user_id
+        <where>
+            <if test="username!=null and username!=''">
+                a.username = #{username}
+            </if>
+            <if test="nickname!=null and nickname!=''">
+                a.nickname LIKE CONCAT('%',#{nickname},'%')
+            </if>
+        </where>
+        GROUP BY a.user_id
+        order by count(*)
+    </select>
+
+</mapper>
